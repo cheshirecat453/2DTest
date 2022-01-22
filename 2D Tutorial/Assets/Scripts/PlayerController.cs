@@ -7,14 +7,17 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D rb;
     private Animator anim;
-    private enum State {idle, run, jump};
+    private Collider2D coll;
+    private enum State {idle, run, jump, falling};
     private State state = State.idle;
+    [SerializeField] private LayerMask ground;
     
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent <Rigidbody2D>();
         anim = GetComponent <Animator>();
+        coll = GetComponent <Collider2D>();
     }
 
     // Update is called once per frame
@@ -38,10 +41,11 @@ public class PlayerController : MonoBehaviour
             //anim.SetBool("running", false);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetButtonDown("Jump") && coll.IsTouchingLayers(ground))
         {
             rb.velocity = new Vector2(rb.velocity.x, 10f);
             state = State.jump;
+
         }
         VelocityState();
         anim.SetInteger("State", (int)state);
@@ -49,11 +53,16 @@ public class PlayerController : MonoBehaviour
 
     private void VelocityState() 
     {
-        if(state == State.jump)
+        if(state == State.jump && rb.velocity.y < .1f)
         {
-            state = State.jump;
+            state = State.falling;
         }
-        else if (Mathf.Abs(rb.velocity.x) > 2f) 
+        else if (state == State.falling && coll.IsTouchingLayers(ground)) 
+        {
+            state = State.idle;
+                
+        }
+        else if (Mathf.Abs(rb.velocity.x) > 2f && coll.IsTouchingLayers(ground)) 
         {
             state = State.run;
         }
